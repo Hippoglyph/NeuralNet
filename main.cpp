@@ -1,68 +1,119 @@
 #include "NeuralNet.h"
 #include <vector>
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+
+
+class Trainer{
+public:
+	std::ifstream file;
+	Trainer(std::string path){
+		file.open(path.c_str());
+		std::string line;
+		std::getline(file, line);
+		std::stringstream ss(line);
+		unsigned x;
+		while(ss >> x)
+			topology.push_back(x);
+	}
+
+	bool isEof(){
+		return file.eof();
+	}
+
+	void getNextRow(std::vector<double> & input){
+		input.clear();
+		std::string line;
+		std::getline(file, line);
+		std::stringstream ss(line);
+		unsigned x;
+		while(ss >> x)
+			input.push_back(x);
+	}
+
+	void getTopology(std::vector<unsigned> & input){
+		input.clear();
+		for(unsigned i = 0; i < topology.size(); ++i){
+			input.push_back(topology[i]);
+		}
+	}
+
+	std::vector<unsigned> topology;
+};
 
 int main(){
 	srand(time(NULL));
+
+	Trainer trainer("tmp/not.txt");
 	std::vector<unsigned> topology;
-	topology.push_back(2);
-	topology.push_back(4);
-	topology.push_back(1);
-	NeuralNet net(topology);
-
-	std::vector<double> input1;
-	input1.push_back(0.0);
-	input1.push_back(0.0);
-	std::vector<double> target1;
-	target1.push_back(0.0);
-
-	std::vector<double> input2;
-	input2.push_back(0.0);
-	input2.push_back(1.0);
-	std::vector<double> target2;
-	target2.push_back(1.0);
-
-	std::vector<double> input3;
-	input3.push_back(1.0);
-	input3.push_back(0.0);
-	std::vector<double> target3;
-	target3.push_back(1.0);
-
-	std::vector<double> input4;
-	input4.push_back(1.0);
-	input4.push_back(1.0);
-	std::vector<double> target4;
-	target4.push_back(0.0);
-
+	trainer.getTopology(topology);
+	std::vector<double> input;
+	std::vector<double> target;
 	std::vector<double> result;
-
-	for(unsigned i = 0; i < 500; ++i){
-		net.feedForward(input1);
-		net.backProp(target1);
-		net.feedForward(input2);
-		net.backProp(target2);
-		net.feedForward(input3);
-		net.backProp(target3);
-		net.feedForward(input4);
-		net.backProp(target4);
-	}
-	std::cout << input1[0] << " " << input1[1] << " : ";
-	net.feedForward(input1);
-	net.getResults(result);
-	std::cout << result.back() << std::endl;
+	NeuralNet net(topology);
 	
-	std::cout << input2[0] << " " << input2[1] << " : ";
-	net.feedForward(input2);
-	net.getResults(result);
-	std::cout << result.back() << std::endl;
+	unsigned trainingCount = 0;
+	while(!trainer.isEof()){
+		++trainingCount;
+		trainer.getNextRow(input);
+		trainer.getNextRow(target);
+		net.feedForward(input);
+		net.getResults(result);
+		net.backProp(target);
 
-	std::cout << input3[0] << " " << input3[1] << " : ";
-	net.feedForward(input3);
-	net.getResults(result);
-	std::cout << result.back() << std::endl;
+		std::cout << "Pass: " << trainingCount << std::endl;
 
-	std::cout << input4[0] << " " << input4[1] << " : ";
-	net.feedForward(input4);
-	net.getResults(result);
-	std::cout << result.back() << std::endl;
+		std::cout << "Inputs: ";
+		for(unsigned i = 0; i < input.size(); ++i)
+			std::cout << input[i] << " ";
+		std::cout << std::endl;
+
+		std::cout << "Results: ";
+		for(unsigned i = 0; i < result.size(); ++i)
+			std::cout << result[i] << " ";
+		std::cout << std::endl;
+
+		std::cout << "Targets: ";
+		for(unsigned i = 0; i < target.size(); ++i)
+			std::cout << target[i] << " ";
+		std::cout << std::endl << std::endl;
+	}
+
+	/*
+
+	std::vector<double> customInput;
+	customInput.push_back(1);
+	customInput.push_back(1);
+	customInput.push_back(1);
+	customInput.push_back(1);
+	customInput.push_back(0);
+	std::vector<double> customResult;
+	net.feedForward(customInput);
+	net.getResults(customResult);
+
+	std::cout << "[1,1,1,1,0] -> ";
+
+	for(unsigned i = 0; i < customResult.size(); ++i)
+		std::cout << customResult[i] << " ";
+	std::cout << std::endl;
+
+	customInput.clear();
+	customInput.push_back(0);
+	customInput.push_back(0);
+	customInput.push_back(0);
+	customInput.push_back(0);
+	customInput.push_back(1);
+
+	net.feedForward(customInput);
+	net.getResults(customResult);
+
+	std::cout << "[0,0,0,0,1] -> ";
+
+	for(unsigned i = 0; i < customResult.size(); ++i)
+		std::cout << customResult[i] << " ";
+	std::cout << std::endl;
+
+	*/
 }
